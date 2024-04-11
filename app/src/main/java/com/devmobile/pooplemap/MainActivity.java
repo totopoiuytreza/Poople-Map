@@ -8,7 +8,9 @@ import com.devmobile.pooplemap.network.AuthService;
 import com.devmobile.pooplemap.models.*;
 import com.devmobile.pooplemap.network.UserService;
 
+import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 
 import java.io.IOException;
 
@@ -23,7 +25,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.activity_login_test);
         Retrofit retrofit = ApiClient.getApiClient();
         AuthService authService = retrofit.create(AuthService.class);
 
@@ -35,7 +37,13 @@ public class MainActivity extends AppCompatActivity {
             public void onResponse(Call<String> call, Response<String> response) {
                 if (response.isSuccessful()) {
                     String token = response.body();
-                    // Process the token here
+                    // Save token in shared preferences
+                    SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(MainActivity.this);
+                    SharedPreferences.Editor editor = sharedPreferences.edit();
+                    editor.putString("authorizationToken", token);
+                    editor.apply();
+
+
                 } else {
                     // Handle error response
                 }
