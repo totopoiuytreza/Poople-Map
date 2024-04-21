@@ -7,6 +7,8 @@ import androidx.fragment.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.RelativeLayout;
 
 import com.devmobile.pooplemap.R;
 
@@ -61,6 +63,60 @@ public class ProfileFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_profile, container, false);
+        View view = inflater.inflate(R.layout.fragment_profile, container, false);
+
+        // Add buttons and actions for the profile fragment
+        RelativeLayout btnAboutUs = view.findViewById(R.id.about_us_layout);
+        RelativeLayout btnContactUs = view.findViewById(R.id.contact_us_layout);
+        RelativeLayout btnLogout = view.findViewById(R.id.log_out_layout);
+
+        btnAboutUs.setOnClickListener(this::onClick);
+        btnContactUs.setOnClickListener(this::onClick);
+        btnLogout.setOnClickListener(this::onClick);
+
+        return view;
     }
+
+    // Add the actions for the buttons
+    public void onClick(View view) {
+        switch (view.getId()) {
+            case R.id.about_us_layout:
+                // Open the about us activity
+                // Print the about us information
+                onClickAnimation(view);
+                System.out.println("About us");
+                break;
+            case R.id.contact_us_layout:
+                // Open the contact us activity
+                onClickAnimation(view);
+
+                System.out.println("Contact us");
+                break;
+            case R.id.log_out_layout:
+                // Log out the user
+                onClickAnimation(view);
+                System.out.println("Log out");
+                break;
+        }
+    }
+
+    public void onClickAnimation(View view) {
+        view.animate()
+                .scaleX(0.9f)
+                .scaleY(0.9f)
+                .setDuration(200)
+                .withEndAction(new Runnable() {
+                    @Override
+                    public void run() {
+                        // Restore the original size of the view after the animation completes
+                        view.animate()
+                                .scaleX(1.0f)
+                                .scaleY(1.0f)
+                                .setDuration(200)
+                                .start();
+                    }
+                })
+                .start();
+    }
+
 }
