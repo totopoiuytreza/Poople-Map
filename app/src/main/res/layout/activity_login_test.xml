@@ -31,7 +31,7 @@
             android:id="@+id/username_input"
             android:textSize="20sp"
             android:inputType="text"
-            android:background="@drawable/rounded_corner"
+            android:background="@drawable/rounded_corner_100"
             android:padding="18dp"
             android:autofillHints="" />
 
@@ -45,7 +45,7 @@
             android:id="@+id/password_input"
             android:textSize="20sp"
             android:inputType="textPassword"
-            android:background="@drawable/rounded_corner"
+            android:background="@drawable/rounded_corner_100"
             android:padding="18dp"
             android:autofillHints="" />
 

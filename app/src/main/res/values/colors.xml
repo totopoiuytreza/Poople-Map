@@ -2,7 +2,15 @@
 <resources>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+    <color name="colorText">#283044</color>
+    <color name="colorTextWhite">#ebf5ee</color>
+    <color name="colorPrimary">#bfa89e</color>
+    <color name="colorPrimaryDark">#8b786d</color>
+    <color name="colorSecondary">#78a1bb</color>
 
-    <color name="colorPrimary">#6200EE</color>
-    <color name="colorSecondary">#3700B3</color>
+    <color name="notificationColor">#2DADDF</color>
+    <color name="languageColor">#CC8B1D</color>
+    <color name="aboutUsColor">#763DFD</color>
+    <color name="sendUsColor">#2DADDF</color>
+    <color name="logoutColor">#EF5D5D</color>
 </resources>

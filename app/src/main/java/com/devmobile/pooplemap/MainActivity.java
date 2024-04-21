@@ -1,31 +1,54 @@
 package com.devmobile.pooplemap;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentTransaction;
 
-import com.devmobile.pooplemap.forms.LoginForm;
-import com.devmobile.pooplemap.network.ApiClient;
-import com.devmobile.pooplemap.network.AuthService;
-import com.devmobile.pooplemap.models.*;
-import com.devmobile.pooplemap.network.UserService;
-
-import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
-
-import java.io.IOException;
-
-import retrofit2.Call;
-import retrofit2.Callback;
-import retrofit2.Response;
-import retrofit2.Retrofit;
+import com.devmobile.pooplemap.databinding.ActivityMainBinding;
+import com.devmobile.pooplemap.fragments.HomeFragment;
+import com.devmobile.pooplemap.fragments.ProfileFragment;
+import com.devmobile.pooplemap.fragments.SettingsFragment;
 
 
 public class MainActivity extends AppCompatActivity {
 
+    ActivityMainBinding binding;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_login_test);
+        binding = ActivityMainBinding.inflate(getLayoutInflater());
+        setContentView(binding.getRoot());
+        // Set default fragment
+        replaceFragment(new HomeFragment());
+        binding.bottomNavigationView.setOnNavigationItemSelectedListener(item -> {
+            switch (item.getItemId()) {
+                case R.id.Home:
+                    replaceFragment(new HomeFragment());
+                    break;
+                case R.id.Profile:
+                    replaceFragment(new ProfileFragment());
+                    break;
+                case R.id.Settings:
+                    replaceFragment(new SettingsFragment());
+                    break;
+            }
+            return true;
+        });
+
+
+    }
+    private void replaceFragment(Fragment fragment) {
+        FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
+        transaction.replace(R.id.fragment_layout, fragment);
+        transaction.commit();
+    }
+}
+
+
+
+// Test Case Login client
+        /*
         Retrofit retrofit = ApiClient.getApiClient();
         AuthService authService = retrofit.create(AuthService.class);
 
@@ -53,5 +76,4 @@ public class MainActivity extends AppCompatActivity {
                 // Handle network failure
             }
         });
-    }
-}
+        */
