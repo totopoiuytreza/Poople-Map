@@ -6,7 +6,6 @@
     <string name="register">Register</string>
     <string name="profile">Profile</string>
     <string name="account_circle_icon">Account circle icon</string>
-    <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
     <string name="edit_profile">Edit Profile</string>
     <string name="notifications">Notifications</string>
@@ -14,4 +13,9 @@
     <string name="log_out">Log out</string>
     <string name="about_us">About us</string>
     <string name="send_us_a_message">Send us a message</string>
+    <string name="chosen_language">Chosen Language</string>
+    <string name="english">English</string>
+    <string name="french">Français</string>
+    <string name="on">On</string>
+    <string name="off">Off</string>
 </resources>

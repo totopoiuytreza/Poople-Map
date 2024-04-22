@@ -62,6 +62,7 @@
                     android:text="johndoe@gmail.com" />
                 
                 <androidx.appcompat.widget.AppCompatButton
+                    android:id="@+id/edit_profile_button"
                     android:layout_width="wrap_content"
                     android:layout_height="40dp"
                     android:layout_gravity="center"
@@ -112,7 +113,20 @@
                             android:textColor="@color/colorTextWhite"
                             android:textStyle="bold"
                             android:layout_centerVertical="true"/>
+
+                        <TextView
+                            android:id="@+id/notfication_status"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="16dp"
+                            android:layout_toStartOf="@+id/notification_switch"
+                            android:text="@string/off"
+                            android:textColor="@color/colorText"
+                            android:textStyle="bold"
+                            android:layout_centerVertical="true"/>
+
                         <androidx.appcompat.widget.SwitchCompat
+                            android:id="@+id/notification_switch"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_alignParentEnd="true"
@@ -146,7 +160,19 @@
                             android:textColor="@color/colorTextWhite"
                             android:textStyle="bold"
                             android:layout_centerVertical="true"/>
+
+                        <TextView
+                            android:id="@+id/chosen_language"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="16dp"
+                            android:layout_toStartOf="@+id/language_switch"
+                            android:text="@string/french"
+                            android:textColor="@color/colorText"
+                            android:textStyle="bold"
+                            android:layout_centerVertical="true"/>
                         <androidx.appcompat.widget.SwitchCompat
+                            android:id="@+id/language_switch"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_alignParentEnd="true"

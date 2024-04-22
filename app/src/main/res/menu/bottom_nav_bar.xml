@@ -7,7 +7,4 @@
     <item android:title="Profile"
         android:icon="@drawable/icon_account"
         android:id="@+id/Profile"/>
-    <item android:title="Settings"
-        android:icon="@drawable/icon_settings"
-        android:id="@+id/Settings"/>
 </menu>

@@ -2,6 +2,8 @@ package com.devmobile.pooplemap.fragments;
 
 import android.os.Bundle;
 
+import androidx.appcompat.widget.AppCompatButton;
+import androidx.appcompat.widget.SwitchCompat;
 import androidx.fragment.app.Fragment;
 
 import android.view.LayoutInflater;
@@ -9,6 +11,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.RelativeLayout;
+import android.widget.TextView;
 
 import com.devmobile.pooplemap.R;
 
@@ -53,6 +56,7 @@ public class ProfileFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setRetainInstance(true);
         if (getArguments() != null) {
             mParam1 = getArguments().getString(ARG_PARAM1);
             mParam2 = getArguments().getString(ARG_PARAM2);
@@ -66,13 +70,41 @@ public class ProfileFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_profile, container, false);
 
         // Add buttons and actions for the profile fragment
+        AppCompatButton btnEditProfile = view.findViewById(R.id.edit_profile_button);
         RelativeLayout btnAboutUs = view.findViewById(R.id.about_us_layout);
         RelativeLayout btnContactUs = view.findViewById(R.id.contact_us_layout);
         RelativeLayout btnLogout = view.findViewById(R.id.log_out_layout);
 
+        btnEditProfile.setOnClickListener(this::onClick);
         btnAboutUs.setOnClickListener(this::onClick);
         btnContactUs.setOnClickListener(this::onClick);
         btnLogout.setOnClickListener(this::onClick);
+
+        // Add switch actions
+        SwitchCompat switchNotification = view.findViewById(R.id.notification_switch);
+
+        switchNotification.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (isChecked) {
+                TextView textNotfificationStatus = view.findViewById(R.id.notfication_status);
+                textNotfificationStatus.setText(R.string.on);
+            } else {
+                TextView textNotfificationStatus = view.findViewById(R.id.notfication_status);
+                textNotfificationStatus.setText(R.string.off);
+            }
+        });
+
+        SwitchCompat switchLanguage = view.findViewById(R.id.language_switch);
+        switchLanguage.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (isChecked) {
+                TextView textLanguage = view.findViewById(R.id.chosen_language);
+                textLanguage.setText(R.string.english);
+            } else {
+                TextView textLanguage = view.findViewById(R.id.chosen_language);
+                textLanguage.setText(R.string.french);
+            }
+        });
+
+
 
         return view;
     }
@@ -80,6 +112,11 @@ public class ProfileFragment extends Fragment {
     // Add the actions for the buttons
     public void onClick(View view) {
         switch (view.getId()) {
+            case R.id.edit_profile_button:
+                // Open the edit profile activity
+                onClickAnimation(view);
+                System.out.println("Edit profile");
+                break;
             case R.id.about_us_layout:
                 // Open the about us activity
                 // Print the about us information
