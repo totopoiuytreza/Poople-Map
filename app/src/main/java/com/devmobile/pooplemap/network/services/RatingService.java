@@ -1,4 +1,4 @@
-package com.devmobile.pooplemap.network;
+package com.devmobile.pooplemap.network.services;
 
 import com.devmobile.pooplemap.models.Rating;
 import com.devmobile.pooplemap.forms.*;

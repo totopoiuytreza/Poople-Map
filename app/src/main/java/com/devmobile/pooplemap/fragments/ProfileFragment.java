@@ -1,71 +1,85 @@
 package com.devmobile.pooplemap.fragments;
 
+import static com.devmobile.pooplemap.MainActivity.getContextOfApplication;
+
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 
 import androidx.appcompat.widget.AppCompatButton;
 import androidx.appcompat.widget.SwitchCompat;
 import androidx.fragment.app.Fragment;
 
+import android.preference.PreferenceManager;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.devmobile.pooplemap.R;
+import com.devmobile.pooplemap.activities.LoginActivity;
+import com.devmobile.pooplemap.db.sqilte.DatabaseHandler;
+import com.devmobile.pooplemap.models.User;
+import com.devmobile.pooplemap.network.services.UserService;
+import com.devmobile.pooplemap.responses.UserResponse;
 
-/**
- * A simple {@link Fragment} subclass.
- * Use the {@link ProfileFragment#newInstance} factory method to
- * create an instance of this fragment.
- */
+import org.w3c.dom.Text;
+
+import javax.inject.Inject;
+
+import dagger.hilt.android.AndroidEntryPoint;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+
+@AndroidEntryPoint
 public class ProfileFragment extends Fragment {
 
-    // TODO: Rename parameter arguments, choose names that match
-    // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-    private static final String ARG_PARAM1 = "param1";
-    private static final String ARG_PARAM2 = "param2";
-
-    // TODO: Rename and change types of parameters
-    private String mParam1;
-    private String mParam2;
-
+    @Inject UserService userService;
+    @Inject DatabaseHandler db;
     public ProfileFragment() {
         // Required empty public constructor
-    }
-
-    /**
-     * Use this factory method to create a new instance of
-     * this fragment using the provided parameters.
-     *
-     * @param param1 Parameter 1.
-     * @param param2 Parameter 2.
-     * @return A new instance of fragment ProfileFragment.
-     */
-    // TODO: Rename and change types and number of parameters
-    public static ProfileFragment newInstance(String param1, String param2) {
-        ProfileFragment fragment = new ProfileFragment();
-        Bundle args = new Bundle();
-        args.putString(ARG_PARAM1, param1);
-        args.putString(ARG_PARAM2, param2);
-        fragment.setArguments(args);
-        return fragment;
     }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setRetainInstance(true);
-        if (getArguments() != null) {
-            mParam1 = getArguments().getString(ARG_PARAM1);
-            mParam2 = getArguments().getString(ARG_PARAM2);
-        }
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+
+        // Call for GetUser
+        Call<UserResponse> call = userService.getUser();
+        call.enqueue(new Callback<UserResponse>() {
+            @Override
+            public void onResponse(Call<UserResponse> call, Response<UserResponse> response) {
+                if (response.isSuccessful()) {
+                    UserResponse userResponse = response.body();
+                    if (userResponse != null) {
+                        TextView textUsername = getView().findViewById(R.id.username);
+                        textUsername.setText(userResponse.getUsername());
+                        TextView textEmail = getView().findViewById(R.id.user_email);
+                        textEmail.setText(userResponse.getEmail());
+
+                        // Add the user to the database
+                        User user = new User();
+                        user.setId(userResponse.getId_user());
+                        user.setUsername(userResponse.getUsername());
+                        user.setEmail(userResponse.getEmail());
+                        db.addUser(user);
+                    }
+                }
+            }
+            @Override
+            public void onFailure(Call<UserResponse> call, Throwable t) {
+                System.out.println("Error");
+            }
+        });
+
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_profile, container, false);
 
@@ -103,9 +117,6 @@ public class ProfileFragment extends Fragment {
                 textLanguage.setText(R.string.french);
             }
         });
-
-
-
         return view;
     }
 
@@ -132,9 +143,19 @@ public class ProfileFragment extends Fragment {
             case R.id.log_out_layout:
                 // Log out the user
                 onClickAnimation(view);
-                System.out.println("Log out");
+                logOut();
                 break;
         }
+    }
+
+    public void logOut() {
+        // Remove the authorization token from the shared preferences
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getContextOfApplication());
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.remove("authorizationToken");
+        editor.apply();
+        // Go to the login activity
+        startActivity(new Intent(getContextOfApplication(), LoginActivity.class));
     }
 
     public void onClickAnimation(View view) {
