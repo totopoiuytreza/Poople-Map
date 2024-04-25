@@ -16,6 +16,7 @@ import com.devmobile.pooplemap.R;
 import com.devmobile.pooplemap.forms.RegisterForm;
 import com.devmobile.pooplemap.network.services.AuthService;
 import com.devmobile.pooplemap.responses.TokenResponse;
+import com.devmobile.pooplemap.responses.UserResponse;
 
 
 import javax.inject.Inject;
@@ -57,22 +58,22 @@ public class RegisterActivity extends AppCompatActivity{
     }
 
     public void registerUser(String username, String password, String email) {
-        Call<Integer> call = authService.registerUser(new RegisterForm(email, username, password));
-        call.enqueue(new Callback<Integer>() {
+        Call<UserResponse> call = authService.registerUser(new RegisterForm(email, username, password));
+        call.enqueue(new Callback<UserResponse>() {
             @Override
-            public void onResponse(Call<Integer> call, Response<Integer> response) {
+            public void onResponse(Call<UserResponse> call, Response<UserResponse> response) {
                 if (response.isSuccessful()) {
                     // User registered
                     Toast.makeText(RegisterActivity.this, "User registered", Toast.LENGTH_SHORT).show();
                     startActivity(new Intent(RegisterActivity.this, LoginActivity.class));
                 } else {
                     // User not registered
-                    Toast.makeText(RegisterActivity.this, "User not registered", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(RegisterActivity.this, "Error when registering", Toast.LENGTH_SHORT).show();
                 }
             }
 
             @Override
-            public void onFailure(Call<Integer> call, Throwable t) {
+            public void onFailure(Call<UserResponse> call, Throwable t) {
                 // Error
                 Toast.makeText(RegisterActivity.this, "Error", Toast.LENGTH_SHORT).show();
             }
