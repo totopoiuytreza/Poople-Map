@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <string name="POSTGRESQL_ADDON_HOST">pooplemap-db.cb6yagcmy1vc.us-east-1.rds.amazonaws.com</string>
-    <string name="POSTGRESQL_ADDON_DB">pooplemap-db</string>
-    <string name="POSTGRESQL_ADDON_USER">postgres</string>
-    <string name="POSTGRESQL_ADDON_PORT">5432</string>
-    <string name="POSTGRESQL_ADDON_PASSWORD">eBIAvy7dMbX3XHy</string>
-    <string name="POSTGRESQL_ADDON_URI">postgres://postgres:eBIAvy7dMbX3XHy@pooplemap-db.cb6yagcmy1vc.us-east-1.rds.amazonaws.com:5432/pooplemap-db</string>
-</resources>
