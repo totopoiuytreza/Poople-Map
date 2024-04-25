@@ -18,4 +18,5 @@
     <string name="french">Français</string>
     <string name="on">On</string>
     <string name="off">Off</string>
+    <string name="email">Email</string>
 </resources>

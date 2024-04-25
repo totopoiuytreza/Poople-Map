@@ -35,8 +35,9 @@ public class MainActivity extends AppCompatActivity {
         appContext = getApplicationContext();
 
         // Shared preferences
-        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getContextOfApplication());
         String token = sharedPreferences.getString("authorizationToken", null);
+
         if (token != null) {
             // User is logged in
             onLogin(savedInstanceState);

@@ -24,7 +24,7 @@ import retrofit2.converter.gson.GsonConverterFactory;
 @Module
 @InstallIn(SingletonComponent.class)
 public class AppModule {
-    private static final String BASE_URL = "http://10.0.2.2:3001/";
+    private static final String BASE_URL = "https://poople-map-api.onrender.com/";
     @Provides
     @Singleton
     public static Retrofit provideRetrofit() {

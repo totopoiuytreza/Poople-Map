@@ -28,11 +28,11 @@ import retrofit2.Response;
 
 @AndroidEntryPoint
 public class LoginActivity extends AppCompatActivity {
-    @Inject
-    AuthService authService;
+    @Inject AuthService authService;
     private EditText usernameEditText;
     private EditText passwordEditText;
     private Button loginButton;
+    private Button registerButton;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -43,6 +43,7 @@ public class LoginActivity extends AppCompatActivity {
         usernameEditText = findViewById(R.id.username_input);
         passwordEditText = findViewById(R.id.password_input);
         loginButton = findViewById(R.id.login_button);
+        registerButton = findViewById(R.id.register_button);
 
         loginButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -52,9 +53,19 @@ public class LoginActivity extends AppCompatActivity {
                 loginUser(username, password);
             }
         });
+
+        registerButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivity(new Intent(LoginActivity.this, RegisterActivity.class));
+            }
+        });
+
+
     }
 
     private void loginUser(String username, String password) {
+        System.out.println("Login user");
         LoginForm loginForm = new LoginForm(username, password);
         Call<TokenResponse> call = authService.loginUser(loginForm);
         call.enqueue(new Callback<TokenResponse>() {
