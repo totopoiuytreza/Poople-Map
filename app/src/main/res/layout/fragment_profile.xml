@@ -73,7 +73,7 @@
                     android:textColor="@color/colorText"
                     android:textSize="22sp"
                     android:textStyle="bold"
-                    android:text="John Doe" />
+                    android:text="" />
                 <TextView
                     android:id="@+id/user_email"
                     android:layout_width="wrap_content"
@@ -81,7 +81,7 @@
                     android:layout_gravity="center"
                     android:textColor="@color/colorTextWhite"
                     android:textSize="12sp"
-                    android:text="johndoe@gmail.com" />
+                    android:text="" />
                 
                 <androidx.appcompat.widget.AppCompatButton
                     android:id="@+id/edit_profile_button"

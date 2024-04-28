@@ -13,6 +13,6 @@ public interface UserService {
     public Call<UserResponse> getUser();
 
     @PATCH("/user/patchUser")
-    public Call<User> patchUser(@Body User patch);
+    public Call<UserResponse> patchUser(@Body User patch);
 
 }

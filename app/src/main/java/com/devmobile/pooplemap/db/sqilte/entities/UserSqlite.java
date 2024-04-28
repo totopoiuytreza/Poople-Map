@@ -1,19 +1,16 @@
-package com.devmobile.pooplemap.models;
+package com.devmobile.pooplemap.db.sqilte.entities;
 
 import java.math.BigInteger;
-import java.util.Date;
 
-public class User {
+public class UserSqlite {
     private BigInteger Id;
     private String Username;
     private String Email;
-    private String Password;
 
-    public User(BigInteger id, String username, String email, String password) {
+    public UserSqlite(BigInteger id, String username, String email) {
         Id = id;
         Username = username;
         Email = email;
-        Password = password;
     }
 
     public BigInteger getId() {
@@ -40,11 +37,4 @@ public class User {
         Email = email;
     }
 
-    public String getPassword() {
-        return Password;
-    }
-
-    public void setPassword(String password) {
-        Password = password;
-    }
 }
