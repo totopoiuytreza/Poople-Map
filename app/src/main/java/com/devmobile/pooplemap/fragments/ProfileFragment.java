@@ -166,7 +166,7 @@ public class ProfileFragment extends Fragment {
             case R.id.edit_profile_button:
                 // Open the edit profile activity
                 onClickAnimation(view);
-                requireActivity().getSupportFragmentManager().beginTransaction().replace(R.id.fragment_layout, EditProfileFragment.newInstance()).addToBackStack(null).commit();
+                requireActivity().getSupportFragmentManager().beginTransaction().replace(R.id.fragment_layout, new EditProfileFragment()).commit();
                 break;
 
             case R.id.edit_profile_picture_button:

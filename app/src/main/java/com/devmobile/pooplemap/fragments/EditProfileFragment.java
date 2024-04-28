@@ -1,5 +1,8 @@
 package com.devmobile.pooplemap.fragments;
 
+import static com.devmobile.pooplemap.MainActivity.getContextOfApplication;
+
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -10,9 +13,12 @@ import android.widget.TextView;
 import androidx.appcompat.widget.AppCompatButton;
 import androidx.fragment.app.Fragment;
 
+import com.devmobile.pooplemap.MainActivity;
 import com.devmobile.pooplemap.R;
+import com.devmobile.pooplemap.activities.CameraActivity;
 import com.devmobile.pooplemap.db.sqilte.DatabaseHandler;
 import com.devmobile.pooplemap.db.sqilte.entities.UserSqlite;
+import com.devmobile.pooplemap.forms.UserForm;
 import com.devmobile.pooplemap.models.User;
 import com.devmobile.pooplemap.network.services.UserService;
 import com.devmobile.pooplemap.responses.UserResponse;
@@ -33,41 +39,42 @@ public class EditProfileFragment extends Fragment {
         // Required empty public constructor
     }
 
-    public static EditProfileFragment newInstance() {
-        EditProfileFragment fragment = new EditProfileFragment();
-        return fragment;
-    }
-
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setRetainInstance(true);
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
 
+        View view = inflater.inflate(R.layout.fragment_edit_profile, container, false);
+
+
         UserSqlite user = db.getCurrentUser();
-        TextView username = getView().findViewById(R.id.edit_username_input);
-        TextView email = getView().findViewById(R.id.edit_email_input);
+        TextView username = view.findViewById(R.id.edit_username_input);
+        TextView email = view.findViewById(R.id.edit_email_input);
 
         username.setText(user.getUsername());
         email.setText(user.getEmail());
 
-        AppCompatButton updateProfileButton = getView().findViewById(R.id.update_profile_button);
+
+        AppCompatButton updateProfileButton = view.findViewById(R.id.update_profile_button);
         updateProfileButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                User userToPatch = new User(null, username.getText().toString(), email.getText().toString(), null);
+                UserForm userToPatch = new UserForm(username.getText().toString(), email.getText().toString());
                 callUpdateUser(userToPatch);
+                // Go back to the profile fragment
+                Intent intent = new Intent(getContextOfApplication(), MainActivity.class);
+                startActivity(intent);
             }
         });
-
-        // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_edit_profile, container, false);
+        return view;
     }
 
-    private void callUpdateUser(User user) {
+    private void callUpdateUser(UserForm user) {
         // Call the update user service
         Call<UserResponse> call = userService.patchUser(user);
         call.enqueue(new Callback<UserResponse>() {
@@ -76,10 +83,10 @@ public class EditProfileFragment extends Fragment {
                 if (response.isSuccessful()) {
                     UserResponse userResponse = response.body();
                     if (userResponse != null) {
+                        String username = userResponse.getUsername();
+                        String email = userResponse.getEmail();
                         // Update the user in the database
-                        TextView username = getView().findViewById(R.id.edit_username_input);
-                        TextView email = getView().findViewById(R.id.edit_email_input);
-                        UserSqlite userSqlite = new UserSqlite(null, username.getText().toString(), email.getText().toString());
+                        UserSqlite userSqlite = new UserSqlite(null, username, email);
                         db.updateUser(userSqlite);
                     }
                 }
