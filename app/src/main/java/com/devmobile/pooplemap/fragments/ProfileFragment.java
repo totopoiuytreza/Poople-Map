@@ -7,10 +7,12 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
 
 import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.PickVisualMediaRequest;
 import androidx.activity.result.contract.ActivityResultContract;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
@@ -19,6 +21,7 @@ import androidx.appcompat.widget.SwitchCompat;
 import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.Fragment;
 
+import android.provider.MediaStore;
 import android.view.LayoutInflater;
 
 
@@ -32,6 +35,7 @@ import android.widget.TextView;
 import android.Manifest;
 import android.widget.Toast;
 
+import com.devmobile.pooplemap.MainActivity;
 import com.devmobile.pooplemap.R;
 import com.devmobile.pooplemap.activities.CameraActivity;
 import com.devmobile.pooplemap.activities.LoginActivity;
@@ -43,6 +47,10 @@ import com.devmobile.pooplemap.network.services.UserService;
 import com.devmobile.pooplemap.responses.UserResponse;
 import com.devmobile.pooplemap.utils.LanguageUtils;
 import com.google.android.material.snackbar.Snackbar;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 
 import javax.inject.Inject;
 
@@ -57,9 +65,8 @@ public class ProfileFragment extends Fragment {
     @Inject UserService userService;
     @Inject DatabaseHandler db;
     private ActivityResultLauncher<String> requestCameraPermissionLauncher;
-
-
-    private static final int PERMISSION_REQUEST_CAMERA = 0;
+    private ActivityResultLauncher<String> requestGalleryPermissionLauncher;
+    private ActivityResultLauncher<PickVisualMediaRequest> imagePickerLauncher;
 
 
     public ProfileFragment() {
@@ -70,7 +77,6 @@ public class ProfileFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setRetainInstance(true);
-
         // Request camera permission
         requestCameraPermissionLauncher = registerForActivityResult(
                 new ActivityResultContracts.RequestPermission(),
@@ -84,7 +90,52 @@ public class ProfileFragment extends Fragment {
                         Toast.makeText(requireActivity(), "Camera permission request was denied.", Toast.LENGTH_SHORT).show();
                     }
                 });
+        requestGalleryPermissionLauncher = registerForActivityResult(
+                new ActivityResultContracts.RequestPermission(),
+                isGranted -> {
+                    if (isGranted) {
+                        // Permission has been granted. Start camera preview Activity.
+                        Toast.makeText(requireActivity(), "Gallery permission was granted. Starting gallery.", Toast.LENGTH_SHORT).show();
+                        startGallery();
+                    } else {
+                        // Permission request was denied.
+                        Toast.makeText(requireActivity(), "Gallery permission request was denied.", Toast.LENGTH_SHORT).show();
+                    }
+                });
 
+        imagePickerLauncher =
+        registerForActivityResult(new ActivityResultContracts.PickVisualMedia(), uri -> {
+            // Callback is invoked after the user selects a media item or closes the
+            if (uri != null) {
+                // Save the image in app storage
+                try {
+                    Bitmap bitmap = MediaStore.Images.Media.getBitmap(requireActivity().getContentResolver(), uri);
+                    File imageFile = new File(requireActivity().getFilesDir(), "profile_picture.jpg");
+                    FileOutputStream out = new FileOutputStream(imageFile);
+                    bitmap.compress(Bitmap.CompressFormat.JPEG, 100, out);
+                    out.flush();
+                    out.close();
+
+                    Toast.makeText(requireActivity(), "Image saved at: " + imageFile.getAbsolutePath(), Toast.LENGTH_SHORT).show();
+
+                    db.deleteImage();
+
+                    // Save the image path in the database
+                    ImagePictureSqlite image = new ImagePictureSqlite(0, imageFile.getAbsolutePath(), "Profile picture");
+                    db.addImage(image);
+
+                    // Set the profile picture
+                    ImageView profilePicture = requireView().findViewById(R.id.profile_picture);
+                    profilePicture.setImageURI(uri);
+
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+            } else {
+                Toast.makeText(requireActivity(), "No media selected", Toast.LENGTH_LONG).show();
+            }
+        });
     }
 
     @Override
@@ -220,6 +271,20 @@ public class ProfileFragment extends Fragment {
         });
     }
 
+    public void requestGalleryPermission() {
+        if (ActivityCompat.checkSelfPermission(getContextOfApplication(), Manifest.permission.READ_MEDIA_IMAGES)
+                == PackageManager.PERMISSION_GRANTED) {
+            // Permission is already available, start camera preview
+            Toast.makeText(getContextOfApplication(),
+                    "Gallery permission is available. Starting preview.",
+                    Toast.LENGTH_SHORT).show();
+            startGallery();
+        } else {
+            // Permission is missing and must be requested.
+            requestGalleryPermissionLauncher.launch(Manifest.permission.READ_MEDIA_IMAGES);
+        }
+    }
+
 
     private void requestCameraPermission() {
         if (ActivityCompat.shouldShowRequestPermissionRationale(requireActivity(),
@@ -240,6 +305,12 @@ public class ProfileFragment extends Fragment {
     private void startCamera() {
         Intent intent = new Intent(getContextOfApplication(), CameraActivity.class);
         startActivity(intent);
+    }
+
+    public void startGallery() {
+        imagePickerLauncher.launch(new PickVisualMediaRequest.Builder()
+                .setMediaType(ActivityResultContracts.PickVisualMedia.ImageOnly.INSTANCE)
+                .build());
     }
 
     public void showImagePicDialog() {
@@ -266,7 +337,17 @@ public class ProfileFragment extends Fragment {
 
                 } else if (which == 1) {
                     // Gallery
-
+                    if(ActivityCompat.checkSelfPermission(getContextOfApplication(), Manifest.permission.READ_MEDIA_IMAGES)
+                            == PackageManager.PERMISSION_GRANTED){
+                        // Permission is already available, start gallery
+                        Toast.makeText(getContextOfApplication(),
+                                "Gallery permission is available. Starting gallery.",
+                                Toast.LENGTH_SHORT).show();
+                        startGallery();
+                    } else {
+                        // Permission is missing and must be requested.
+                        requestGalleryPermission();
+                    }
 
                 }
             }
