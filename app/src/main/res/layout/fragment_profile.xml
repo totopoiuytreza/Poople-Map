@@ -43,25 +43,42 @@
                     android:layout_height="wrap_content"
                     android:orientation="vertical">
 
-                    <ImageView
-                        android:id="@+id/profile_picture"
+                    <androidx.cardview.widget.CardView
+                        android:id="@+id/card_view_for_image"
                         android:layout_width="180dp"
                         android:layout_height="180dp"
-                        android:layout_centerInParent="true"
                         android:layout_marginTop="40sp"
-                        android:src="@drawable/icon_account_circle" />
+                        android:layout_centerInParent="true"
+                        app:cardBackgroundColor="#00000000"
+                        app:cardCornerRadius="100dp">
+
+                        <ImageView
+                            android:id="@+id/profile_picture"
+                            android:layout_width="180dp"
+                            android:layout_height="180dp"
+                            android:scaleType="centerCrop"
+                            android:src="@drawable/icon_account_circle" />
+
+
+
+                    </androidx.cardview.widget.CardView>
 
                     <ImageView
-                        android:id="@+id/edit_profile_picture_button"
-                        android:layout_width="40dp"
-                        android:layout_height="40dp"
-                        android:layout_marginEnd="16dp"
-                        android:layout_marginBottom="24dp"
-                        android:layout_alignEnd="@id/profile_picture"
-                        android:layout_alignBottom="@id/profile_picture"
-                        android:background="@drawable/bg_circle"
-                        android:padding="8dp"
-                        android:src="@drawable/icon_edit" />
+                    android:id="@+id/edit_profile_picture_button"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:layout_alignEnd="@id/card_view_for_image"
+                    android:layout_alignBottom="@id/card_view_for_image"
+                    android:layout_marginEnd="16dp"
+                    android:layout_marginBottom="24dp"
+                    android:background="@drawable/bg_circle"
+                    android:padding="8dp"
+                    android:src="@drawable/icon_edit"
+                    android:elevation="2dp"/>
+
+
+
+
 
                 </RelativeLayout>
                 <TextView

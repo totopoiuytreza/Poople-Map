@@ -29,6 +29,7 @@ import com.devmobile.pooplemap.MainActivity;
 import com.devmobile.pooplemap.R;
 import com.devmobile.pooplemap.db.sqilte.DatabaseHandler;
 import com.devmobile.pooplemap.db.sqilte.entities.ImagePictureSqlite;
+import com.devmobile.pooplemap.fragments.ProfileFragment;
 import com.google.common.util.concurrent.ListenableFuture;
 
 import java.io.File;
@@ -116,27 +117,12 @@ public class CameraActivity extends AppCompatActivity {
                     @Override
                     public void run() {
 
-
-                        /*
-                        // Load the captured image into a Bitmap
-                        Bitmap capturedBitmap = BitmapFactory.decodeFile(file.getAbsolutePath());
-
-                        // Create a circular bitmap for the profile picture
-                        Bitmap profileBitmap = getRoundedBitmap(capturedBitmap);
-
-                        // Save the circular profile picture to a file
-                        saveBitmapToFile(profileBitmap, file);
-
-                         */
-
                         // Delete the previous database image
                         db.deleteImage();
 
                         // Save the image to the database
                         ImagePictureSqlite image = new ImagePictureSqlite(0, file.getPath(), "Description");
                         db.addImage(image);
-
-                        //Toast.makeText(getApplicationContext(), "Image saved at: " + file.getPath(), Toast.LENGTH_SHORT).show();
                     }
                 });
                 startActivity(new Intent(CameraActivity.this, MainActivity.class));
@@ -153,39 +139,6 @@ public class CameraActivity extends AppCompatActivity {
                 startCamera(cameraFacing);
             }
         });
-    }
-
-
-
-    private Bitmap getRoundedBitmap(Bitmap bitmap) {
-        int width = bitmap.getWidth();
-        int height = bitmap.getHeight();
-        int diameter = Math.min(width, height);
-
-        Bitmap output = Bitmap.createBitmap(diameter, diameter, Bitmap.Config.ARGB_8888);
-        Canvas canvas = new Canvas(output);
-
-        final Paint paint = new Paint();
-        final Rect rect = new Rect(0, 0, diameter, diameter);
-
-        paint.setAntiAlias(true);
-        canvas.drawARGB(0, 0, 0, 0);
-        canvas.drawCircle(diameter / 2, diameter / 2, diameter / 2, paint);
-        paint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.SRC_IN));
-        canvas.drawBitmap(bitmap, rect, rect, paint);
-
-        return output;
-    }
-
-    private void saveBitmapToFile(Bitmap bitmap, File file) {
-        try {
-            FileOutputStream outputStream = new FileOutputStream(file);
-            bitmap.compress(Bitmap.CompressFormat.JPEG, 100, outputStream);
-            outputStream.flush();
-            outputStream.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
     }
 
     private int aspectRatio(int width, int height) {

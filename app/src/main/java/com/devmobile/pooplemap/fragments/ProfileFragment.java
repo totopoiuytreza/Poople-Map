@@ -8,6 +8,12 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.PorterDuff;
+import android.graphics.PorterDuffXfermode;
+import android.graphics.Rect;
 import android.net.Uri;
 import android.os.Bundle;
 
@@ -116,8 +122,7 @@ public class ProfileFragment extends Fragment {
                     out.flush();
                     out.close();
 
-                    Toast.makeText(requireActivity(), "Image saved at: " + imageFile.getAbsolutePath(), Toast.LENGTH_SHORT).show();
-
+                    // Delete the previous database image
                     db.deleteImage();
 
                     // Save the image path in the database
@@ -400,5 +405,4 @@ public class ProfileFragment extends Fragment {
             textNotfificationStatus.setText(R.string.off);
         }
     }
-
 }
