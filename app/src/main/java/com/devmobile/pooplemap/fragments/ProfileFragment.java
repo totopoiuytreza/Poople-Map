@@ -3,30 +3,27 @@ package com.devmobile.pooplemap.fragments;
 import static com.devmobile.pooplemap.MainActivity.getContextOfApplication;
 
 import android.app.AlertDialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
-import android.graphics.Color;
-import android.graphics.Paint;
-import android.graphics.PorterDuff;
-import android.graphics.PorterDuffXfermode;
-import android.graphics.Rect;
 import android.net.Uri;
 import android.os.Bundle;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.PickVisualMediaRequest;
-import androidx.activity.result.contract.ActivityResultContract;
 import androidx.activity.result.contract.ActivityResultContracts;
-import androidx.annotation.NonNull;
 import androidx.appcompat.widget.AppCompatButton;
 import androidx.appcompat.widget.SwitchCompat;
 import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.Fragment;
+import androidx.exifinterface.media.ExifInterface;
 
+import android.os.StrictMode;
 import android.provider.MediaStore;
 import android.view.LayoutInflater;
 
@@ -41,22 +38,23 @@ import android.widget.TextView;
 import android.Manifest;
 import android.widget.Toast;
 
-import com.devmobile.pooplemap.MainActivity;
 import com.devmobile.pooplemap.R;
 import com.devmobile.pooplemap.activities.CameraActivity;
 import com.devmobile.pooplemap.activities.LoginActivity;
-import com.devmobile.pooplemap.db.sqilte.DatabaseHandler;
+import com.devmobile.pooplemap.db.jdbc.DatabaseHandlerImg;
+import com.devmobile.pooplemap.db.jdbc.entities.UserProfilePicture;
+import com.devmobile.pooplemap.db.sqilte.DatabaseHandlerSqlite;
 import com.devmobile.pooplemap.db.sqilte.entities.ImagePictureSqlite;
 import com.devmobile.pooplemap.db.sqilte.entities.UserSqlite;
-import com.devmobile.pooplemap.models.User;
 import com.devmobile.pooplemap.network.services.UserService;
 import com.devmobile.pooplemap.responses.UserResponse;
 import com.devmobile.pooplemap.utils.LanguageUtils;
-import com.google.android.material.snackbar.Snackbar;
+import com.devmobile.pooplemap.utils.ProfileInfoUtils;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.math.BigInteger;
 
 import javax.inject.Inject;
 
@@ -68,8 +66,11 @@ import retrofit2.Response;
 @AndroidEntryPoint
 public class ProfileFragment extends Fragment {
 
+    DatabaseHandlerImg dbImg = new DatabaseHandlerImg();
+
     @Inject UserService userService;
-    @Inject DatabaseHandler db;
+    @Inject
+    DatabaseHandlerSqlite db;
     private ActivityResultLauncher<String> requestCameraPermissionLauncher;
     private ActivityResultLauncher<String> requestGalleryPermissionLauncher;
     private ActivityResultLauncher<PickVisualMediaRequest> imagePickerLauncher;
@@ -82,7 +83,6 @@ public class ProfileFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setRetainInstance(true);
         // Request camera permission
         requestCameraPermissionLauncher = registerForActivityResult(
                 new ActivityResultContracts.RequestPermission(),
@@ -126,8 +126,25 @@ public class ProfileFragment extends Fragment {
                     db.deleteImage();
 
                     // Save the image path in the database
-                    ImagePictureSqlite image = new ImagePictureSqlite(0, imageFile.getAbsolutePath(), "Profile picture");
+                    ImagePictureSqlite image = new ImagePictureSqlite(imageFile.getAbsolutePath(), "Profile picture");
                     db.addImage(image);
+
+                    // Save the image in the database with JDBC
+                    BigInteger userId = db.getCurrentUser().getId();
+                    byte[] imageBytes = null;
+                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                        imageBytes = java.nio.file.Files.readAllBytes(imageFile.toPath());
+                    }
+                    UserProfilePicture userProfilePicture = new UserProfilePicture(userId, imageBytes, "Profile picture");
+                    int SDK_INT = android.os.Build.VERSION.SDK_INT;
+                    if (SDK_INT > 8)
+                    {
+                        StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder()
+                                .permitAll().build();
+                        StrictMode.setThreadPolicy(policy);
+                        dbImg.insertUserProfilePicture(userProfilePicture);
+                    }
+
 
                     // Set the profile picture
                     ImageView profilePicture = requireView().findViewById(R.id.profile_picture);
@@ -155,22 +172,10 @@ public class ProfileFragment extends Fragment {
         TextView textUsername = view.findViewById(R.id.username);
         TextView textEmail = view.findViewById(R.id.user_email);
         UserSqlite user = db.getCurrentUser();
-        if(user != null){
-            textUsername.setText(user.getUsername());
-            textEmail.setText(user.getEmail());
-        }
-        else{
-            callUser();
-        }
-
-        // Profile picture from the database
         ImageView profilePicture = view.findViewById(R.id.profile_picture);
-        // Set the profile picture from the database
-        ImagePictureSqlite image = db.getCurrentImage();
-        if(image != null){
-            Uri imageUri = Uri.parse(image.getImagePath());
-            profilePicture.setImageURI(imageUri);
-        }
+        ImagePictureSqlite imagePicture = db.getCurrentImage();
+
+        ProfileInfoUtils.changeProfileInfo(textUsername, textEmail, user, profilePicture, imagePicture);
 
 
 
@@ -216,6 +221,7 @@ public class ProfileFragment extends Fragment {
         return view;
     }
 
+
     // Add the actions for the buttons
     public void onClick(View view) {
         switch (view.getId()) {
@@ -248,32 +254,6 @@ public class ProfileFragment extends Fragment {
                 logOut();
                 break;
         }
-    }
-    public void callUser(){
-        // Call for GetUser
-        Call<UserResponse> call = userService.getUser();
-        call.enqueue(new Callback<UserResponse>() {
-            @Override
-            public void onResponse(Call<UserResponse> call, Response<UserResponse> response) {
-                if (response.isSuccessful()) {
-                    UserResponse userResponse = response.body();
-                    if (userResponse != null) {
-                        TextView textUsername = requireView().findViewById(R.id.username);
-                        textUsername.setText(userResponse.getUsername());
-                        TextView textEmail = requireView().findViewById(R.id.user_email);
-                        textEmail.setText(userResponse.getEmail());
-
-                        // Add the user to the database
-                        UserSqlite user = new UserSqlite(userResponse.getId_user(), userResponse.getUsername(), userResponse.getEmail());
-                        db.addUser(user);
-                    }
-                }
-            }
-            @Override
-            public void onFailure(Call<UserResponse> call, Throwable t) {
-                System.out.println("Error");
-            }
-        });
     }
 
     public void requestGalleryPermission() {

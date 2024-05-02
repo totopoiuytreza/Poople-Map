@@ -7,17 +7,18 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
 import com.devmobile.pooplemap.db.sqilte.entities.UserSqlite;
-import com.devmobile.pooplemap.models.User;
 import com.devmobile.pooplemap.db.sqilte.entities.ImagePictureSqlite;
 
 import java.math.BigInteger;
 
-public class DatabaseHandler extends SQLiteOpenHelper {
+public class DatabaseHandlerSqlite extends SQLiteOpenHelper {
 
     private static final int DATABASE_VERSION = 1;
     private static final String DATABASE_NAME = "pooplemap";
     private static final String TABLE_USERS = "users";
-    private static final String KEY_id = "id_user";
+    private static final String KEY_id = "id";
+
+    private static final String KEY_id_user = "id_user";
     private static final String KEY_username = "username";
     private static final String KEY_email = "email";
 
@@ -27,14 +28,16 @@ public class DatabaseHandler extends SQLiteOpenHelper {
     private static final String KEY_image_description = "image_description";
 
 
-    public DatabaseHandler(Context context) {
+    public DatabaseHandlerSqlite(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
     }
 
     @Override
     public void onCreate(android.database.sqlite.SQLiteDatabase db) {
         String CREATE_USERS_TABLE = "CREATE TABLE " + TABLE_USERS + "("
-                + KEY_id + " INTEGER PRIMARY KEY," + KEY_username + " TEXT,"
+                + KEY_id + " INTEGER PRIMARY KEY,"
+                + KEY_id_user + " INTEGER,"
+                + KEY_username + " TEXT,"
                 + KEY_email + " TEXT" + ")";
 
         db.execSQL(CREATE_USERS_TABLE);
@@ -55,6 +58,7 @@ public class DatabaseHandler extends SQLiteOpenHelper {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues values = new ContentValues();
 
+        values.put(KEY_id_user, user.getId().intValue());
         values.put(KEY_username, user.getUsername());
         values.put(KEY_email, user.getEmail());
 
@@ -64,14 +68,14 @@ public class DatabaseHandler extends SQLiteOpenHelper {
 
     public UserSqlite getCurrentUser() {
         SQLiteDatabase db = this.getReadableDatabase();
-        Cursor cursor = db.query(TABLE_USERS, new String[] { KEY_id,
+        Cursor cursor = db.query(TABLE_USERS, new String[] { KEY_id, KEY_id_user,
                         KEY_username, KEY_email,  }, KEY_id + "=?",
                 new String[] { String.valueOf(1) }, null, null, null, null);
 
         UserSqlite user = null; // Initialize the user variable to null
 
         if (cursor != null && cursor.moveToFirst()) {
-            user = new UserSqlite(BigInteger.valueOf(cursor.getInt(0)), cursor.getString(1), cursor.getString(2));
+            user = new UserSqlite(BigInteger.valueOf(cursor.getInt(1)), cursor.getString(2), cursor.getString(3));
         }
         if (cursor != null) {
             cursor.close(); // Close the cursor to release resources
@@ -84,6 +88,7 @@ public class DatabaseHandler extends SQLiteOpenHelper {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues values = new ContentValues();
 
+        values.put(KEY_id_user, user.getId().intValue());
         values.put(KEY_username, user.getUsername());
         values.put(KEY_email, user.getEmail());
 
@@ -119,7 +124,7 @@ public class DatabaseHandler extends SQLiteOpenHelper {
         ImagePictureSqlite image = null; // Initialize the image variable to null
 
         if (cursor != null && cursor.moveToFirst()) {
-            image = new ImagePictureSqlite(cursor.getInt(0), cursor.getString(1), cursor.getString(2));
+            image = new ImagePictureSqlite(cursor.getString(1), cursor.getString(2));
         }
 
         if (cursor != null) {

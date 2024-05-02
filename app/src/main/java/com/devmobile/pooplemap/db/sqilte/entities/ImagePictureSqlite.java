@@ -4,7 +4,7 @@ public class ImagePictureSqlite {
     private String imagePath;
     private String description;
 
-    public ImagePictureSqlite(int imageId, String imagePath, String description) {
+    public ImagePictureSqlite(String imagePath, String description) {
         this.imagePath = imagePath;
         this.description = description;
     }

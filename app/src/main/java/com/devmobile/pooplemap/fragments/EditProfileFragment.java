@@ -7,7 +7,6 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.TextView;
 
 import androidx.appcompat.widget.AppCompatButton;
@@ -15,11 +14,9 @@ import androidx.fragment.app.Fragment;
 
 import com.devmobile.pooplemap.MainActivity;
 import com.devmobile.pooplemap.R;
-import com.devmobile.pooplemap.activities.CameraActivity;
-import com.devmobile.pooplemap.db.sqilte.DatabaseHandler;
+import com.devmobile.pooplemap.db.sqilte.DatabaseHandlerSqlite;
 import com.devmobile.pooplemap.db.sqilte.entities.UserSqlite;
 import com.devmobile.pooplemap.forms.UserForm;
-import com.devmobile.pooplemap.models.User;
 import com.devmobile.pooplemap.network.services.UserService;
 import com.devmobile.pooplemap.responses.UserResponse;
 
@@ -34,7 +31,8 @@ import retrofit2.Response;
 public class EditProfileFragment extends Fragment {
 
     @Inject UserService userService;
-    @Inject DatabaseHandler db;
+    @Inject
+    DatabaseHandlerSqlite db;
     public EditProfileFragment() {
         // Required empty public constructor
     }
@@ -42,7 +40,6 @@ public class EditProfileFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setRetainInstance(true);
     }
 
     @Override

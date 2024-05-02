@@ -1,17 +1,12 @@
 package com.devmobile.pooplemap.activities;
 
 import android.content.Intent;
-import android.graphics.Canvas;
-import android.graphics.Paint;
-import android.graphics.PorterDuff;
-import android.graphics.PorterDuffXfermode;
-import android.graphics.Rect;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.StrictMode;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.Toast;
-
-import android.graphics.Bitmap;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -27,14 +22,16 @@ import androidx.core.content.ContextCompat;
 
 import com.devmobile.pooplemap.MainActivity;
 import com.devmobile.pooplemap.R;
-import com.devmobile.pooplemap.db.sqilte.DatabaseHandler;
+import com.devmobile.pooplemap.db.jdbc.DatabaseHandlerImg;
+import com.devmobile.pooplemap.db.jdbc.entities.UserProfilePicture;
+import com.devmobile.pooplemap.db.sqilte.DatabaseHandlerSqlite;
 import com.devmobile.pooplemap.db.sqilte.entities.ImagePictureSqlite;
-import com.devmobile.pooplemap.fragments.ProfileFragment;
 import com.google.common.util.concurrent.ListenableFuture;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
+import java.math.BigInteger;
+import java.nio.file.Files;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 
@@ -44,8 +41,10 @@ import dagger.hilt.android.AndroidEntryPoint;
 
 @AndroidEntryPoint
 public class CameraActivity extends AppCompatActivity {
+    DatabaseHandlerImg dbImg = new DatabaseHandlerImg();
 
-    @Inject DatabaseHandler db;
+    @Inject
+    DatabaseHandlerSqlite db;
     private PreviewView cameraPreview;
     ImageView capture, flipCamera;
     int cameraFacing = CameraSelector.LENS_FACING_BACK;
@@ -121,8 +120,28 @@ public class CameraActivity extends AppCompatActivity {
                         db.deleteImage();
 
                         // Save the image to the database
-                        ImagePictureSqlite image = new ImagePictureSqlite(0, file.getPath(), "Description");
+                        ImagePictureSqlite image = new ImagePictureSqlite(file.getPath(), "Description");
                         db.addImage(image);
+
+                        // Save the image to the database with JDBC
+                        BigInteger userId = db.getCurrentUser().getId();
+                        byte[] imageBytes = null;
+                        try {
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                                imageBytes = Files.readAllBytes(file.toPath());
+                            }
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                        UserProfilePicture userProfilePicture = new UserProfilePicture(userId, imageBytes, "Description");
+                        int SDK_INT = android.os.Build.VERSION.SDK_INT;
+                        if (SDK_INT > 8)
+                        {
+                            StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder()
+                                    .permitAll().build();
+                            StrictMode.setThreadPolicy(policy);
+                            dbImg.insertUserProfilePicture(userProfilePicture);
+                        }
                     }
                 });
                 startActivity(new Intent(CameraActivity.this, MainActivity.class));
