@@ -3,15 +3,11 @@ package com.devmobile.pooplemap.fragments;
 import static com.devmobile.pooplemap.MainActivity.getContextOfApplication;
 
 import android.app.AlertDialog;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.Canvas;
-import android.net.Uri;
 import android.os.Bundle;
 
 import androidx.activity.result.ActivityResultLauncher;
@@ -21,7 +17,6 @@ import androidx.appcompat.widget.AppCompatButton;
 import androidx.appcompat.widget.SwitchCompat;
 import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.Fragment;
-import androidx.exifinterface.media.ExifInterface;
 
 import android.os.StrictMode;
 import android.provider.MediaStore;
@@ -39,6 +34,7 @@ import android.Manifest;
 import android.widget.Toast;
 
 import com.devmobile.pooplemap.R;
+import com.devmobile.pooplemap.activities.Camera1Activity;
 import com.devmobile.pooplemap.activities.CameraActivity;
 import com.devmobile.pooplemap.activities.LoginActivity;
 import com.devmobile.pooplemap.db.jdbc.DatabaseHandlerImg;
@@ -47,7 +43,6 @@ import com.devmobile.pooplemap.db.sqilte.DatabaseHandlerSqlite;
 import com.devmobile.pooplemap.db.sqilte.entities.ImagePictureSqlite;
 import com.devmobile.pooplemap.db.sqilte.entities.UserSqlite;
 import com.devmobile.pooplemap.network.services.UserService;
-import com.devmobile.pooplemap.responses.UserResponse;
 import com.devmobile.pooplemap.utils.LanguageUtils;
 import com.devmobile.pooplemap.utils.ProfileInfoUtils;
 
@@ -59,9 +54,6 @@ import java.math.BigInteger;
 import javax.inject.Inject;
 
 import dagger.hilt.android.AndroidEntryPoint;
-import retrofit2.Call;
-import retrofit2.Callback;
-import retrofit2.Response;
 
 @AndroidEntryPoint
 public class ProfileFragment extends Fragment {
@@ -74,6 +66,7 @@ public class ProfileFragment extends Fragment {
     private ActivityResultLauncher<String> requestCameraPermissionLauncher;
     private ActivityResultLauncher<String> requestGalleryPermissionLauncher;
     private ActivityResultLauncher<PickVisualMediaRequest> imagePickerLauncher;
+
 
 
     public ProfileFragment() {
@@ -292,6 +285,11 @@ public class ProfileFragment extends Fragment {
         startActivity(intent);
     }
 
+    public void startCamera1() {
+        Intent intent = new Intent(getContextOfApplication(), Camera1Activity.class);
+        startActivity(intent);
+    }
+
     public void startGallery() {
         imagePickerLauncher.launch(new PickVisualMediaRequest.Builder()
                 .setMediaType(ActivityResultContracts.PickVisualMedia.ImageOnly.INSTANCE)
@@ -299,7 +297,7 @@ public class ProfileFragment extends Fragment {
     }
 
     public void showImagePicDialog() {
-        String options[] = {"Camera", "Gallery"};
+        String options[] = {"Camera", "Gallery", "Camera Deprecated"};
         AlertDialog.Builder builder = new AlertDialog.Builder(requireActivity());
         builder.setTitle("Pick Image From");
         builder.setItems(options, new DialogInterface.OnClickListener() {
@@ -333,7 +331,20 @@ public class ProfileFragment extends Fragment {
                         // Permission is missing and must be requested.
                         requestGalleryPermission();
                     }
-
+                }
+                else if (which == 2) {
+                    // Camera deprecated
+                    if (ActivityCompat.checkSelfPermission(getContextOfApplication(), Manifest.permission.CAMERA)
+                            == PackageManager.PERMISSION_GRANTED) {
+                        // Permission is already available, start camera preview
+                        Toast.makeText(getContextOfApplication(),
+                                "Camera permission is available. Starting preview.",
+                                Toast.LENGTH_SHORT).show();
+                        startCamera1();
+                    } else {
+                        // Permission is missing and must be requested.
+                        requestCameraPermission();
+                    }
                 }
             }
         });
