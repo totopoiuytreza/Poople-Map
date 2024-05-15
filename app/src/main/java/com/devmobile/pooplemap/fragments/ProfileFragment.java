@@ -3,44 +3,58 @@ package com.devmobile.pooplemap.fragments;
 import static com.devmobile.pooplemap.MainActivity.getContextOfApplication;
 
 import android.app.AlertDialog;
-import android.content.ContentValues;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
-import android.content.res.Configuration;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
 import android.net.Uri;
 import android.os.Bundle;
 
-import androidx.appcompat.widget.AlertDialogLayout;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.PickVisualMediaRequest;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.widget.AppCompatButton;
 import androidx.appcompat.widget.SwitchCompat;
-import androidx.core.content.ContextCompat;
+import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.Fragment;
+import androidx.exifinterface.media.ExifInterface;
 
-import android.preference.PreferenceManager;
+import android.os.StrictMode;
 import android.provider.MediaStore;
 import android.view.LayoutInflater;
+
+
+import android.preference.PreferenceManager;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
-import com.devmobile.pooplemap.MainActivity;
 import android.Manifest;
-import android.content.pm.PackageManager;
-import androidx.core.content.ContextCompat;
+import android.widget.Toast;
+
 import com.devmobile.pooplemap.R;
+import com.devmobile.pooplemap.activities.CameraActivity;
 import com.devmobile.pooplemap.activities.LoginActivity;
-import com.devmobile.pooplemap.db.sqilte.DatabaseHandler;
-import com.devmobile.pooplemap.models.User;
+import com.devmobile.pooplemap.db.jdbc.DatabaseHandlerImg;
+import com.devmobile.pooplemap.db.jdbc.entities.UserProfilePicture;
+import com.devmobile.pooplemap.db.sqilte.DatabaseHandlerSqlite;
+import com.devmobile.pooplemap.db.sqilte.entities.ImagePictureSqlite;
+import com.devmobile.pooplemap.db.sqilte.entities.UserSqlite;
 import com.devmobile.pooplemap.network.services.UserService;
 import com.devmobile.pooplemap.responses.UserResponse;
+import com.devmobile.pooplemap.utils.LanguageUtils;
+import com.devmobile.pooplemap.utils.ProfileInfoUtils;
 
-import org.w3c.dom.Text;
-
-import java.util.Locale;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.math.BigInteger;
 
 import javax.inject.Inject;
 
@@ -52,16 +66,16 @@ import retrofit2.Response;
 @AndroidEntryPoint
 public class ProfileFragment extends Fragment {
 
-    @Inject UserService userService;
-    @Inject DatabaseHandler db;
-    private static final int CAMERA_REQUEST = 100;
-    private static final int STORAGE_REQUEST = 200;
-    private static final int IMAGEPICK_GALLERY_REQUEST = 300;
-    private static final int IMAGE_PICKCAMERA_REQUEST = 400;
+    DatabaseHandlerImg dbImg = new DatabaseHandlerImg();
 
-    String cameraPermission[];
-    String storagePermission[];
-    Uri imageuri;
+    @Inject UserService userService;
+    @Inject
+    DatabaseHandlerSqlite db;
+    private ActivityResultLauncher<String> requestCameraPermissionLauncher;
+    private ActivityResultLauncher<String> requestGalleryPermissionLauncher;
+    private ActivityResultLauncher<PickVisualMediaRequest> imagePickerLauncher;
+
+
     public ProfileFragment() {
         // Required empty public constructor
     }
@@ -69,48 +83,101 @@ public class ProfileFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setRetainInstance(true);
-        cameraPermission = new String[]{Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE};
-        storagePermission = new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE};
+        // Request camera permission
+        requestCameraPermissionLauncher = registerForActivityResult(
+                new ActivityResultContracts.RequestPermission(),
+                isGranted -> {
+                    if (isGranted) {
+                        // Permission has been granted. Start camera preview Activity.
+                        Toast.makeText(requireActivity(), "Camera permission was granted. Starting preview.", Toast.LENGTH_SHORT).show();
+                        startCamera();
+                    } else {
+                        // Permission request was denied.
+                        Toast.makeText(requireActivity(), "Camera permission request was denied.", Toast.LENGTH_SHORT).show();
+                    }
+                });
+        requestGalleryPermissionLauncher = registerForActivityResult(
+                new ActivityResultContracts.RequestPermission(),
+                isGranted -> {
+                    if (isGranted) {
+                        // Permission has been granted. Start camera preview Activity.
+                        Toast.makeText(requireActivity(), "Gallery permission was granted. Starting gallery.", Toast.LENGTH_SHORT).show();
+                        startGallery();
+                    } else {
+                        // Permission request was denied.
+                        Toast.makeText(requireActivity(), "Gallery permission request was denied.", Toast.LENGTH_SHORT).show();
+                    }
+                });
+
+        imagePickerLauncher =
+        registerForActivityResult(new ActivityResultContracts.PickVisualMedia(), uri -> {
+            // Callback is invoked after the user selects a media item or closes the
+            if (uri != null) {
+                // Save the image in app storage
+                try {
+                    Bitmap bitmap = MediaStore.Images.Media.getBitmap(requireActivity().getContentResolver(), uri);
+                    File imageFile = new File(requireActivity().getFilesDir(), "profile_picture.jpg");
+                    FileOutputStream out = new FileOutputStream(imageFile);
+                    bitmap.compress(Bitmap.CompressFormat.JPEG, 100, out);
+                    out.flush();
+                    out.close();
+
+                    // Delete the previous database image
+                    db.deleteImage();
+
+                    // Save the image path in the database
+                    ImagePictureSqlite image = new ImagePictureSqlite(imageFile.getAbsolutePath(), "Profile picture");
+                    db.addImage(image);
+
+                    // Save the image in the database with JDBC
+                    BigInteger userId = db.getCurrentUser().getId();
+                    byte[] imageBytes = null;
+                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                        imageBytes = java.nio.file.Files.readAllBytes(imageFile.toPath());
+                    }
+                    UserProfilePicture userProfilePicture = new UserProfilePicture(userId, imageBytes, "Profile picture");
+                    int SDK_INT = android.os.Build.VERSION.SDK_INT;
+                    if (SDK_INT > 8)
+                    {
+                        StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder()
+                                .permitAll().build();
+                        StrictMode.setThreadPolicy(policy);
+                        dbImg.insertUserProfilePicture(userProfilePicture);
+                    }
+
+
+                    // Set the profile picture
+                    ImageView profilePicture = requireView().findViewById(R.id.profile_picture);
+                    profilePicture.setImageURI(uri);
+
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+            } else {
+                Toast.makeText(requireActivity(), "No media selected", Toast.LENGTH_LONG).show();
+            }
+        });
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
 
-        // Call for GetUser
-        Call<UserResponse> call = userService.getUser();
-        call.enqueue(new Callback<UserResponse>() {
-            @Override
-            public void onResponse(Call<UserResponse> call, Response<UserResponse> response) {
-                if (response.isSuccessful()) {
-                    UserResponse userResponse = response.body();
-                    if (userResponse != null) {
-                        TextView textUsername = getView().findViewById(R.id.username);
-                        textUsername.setText(userResponse.getUsername());
-                        TextView textEmail = getView().findViewById(R.id.user_email);
-                        textEmail.setText(userResponse.getEmail());
-
-                        // Add the user to the database
-                        User user = new User();
-                        user.setId(userResponse.getId_user());
-                        user.setUsername(userResponse.getUsername());
-                        user.setEmail(userResponse.getEmail());
-                        db.addUser(user);
-                    }
-                }
-            }
-            @Override
-            public void onFailure(Call<UserResponse> call, Throwable t) {
-                System.out.println("Error");
-            }
-        });
-
-
-
 
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_profile, container, false);
+
+        // User information from the database
+        TextView textUsername = view.findViewById(R.id.username);
+        TextView textEmail = view.findViewById(R.id.user_email);
+        UserSqlite user = db.getCurrentUser();
+        ImageView profilePicture = view.findViewById(R.id.profile_picture);
+        ImagePictureSqlite imagePicture = db.getCurrentImage();
+
+        ProfileInfoUtils.changeProfileInfo(textUsername, textEmail, user, profilePicture, imagePicture);
+
+
 
         // Add buttons and actions for the profile fragment
         AppCompatButton btnEditProfile = view.findViewById(R.id.edit_profile_button);
@@ -136,26 +203,17 @@ public class ProfileFragment extends Fragment {
             }
         });
 
-        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getContextOfApplication());
-        boolean switchState = sharedPreferences.getBoolean("languageSwitchState", false);
-
+        boolean switchState = LanguageUtils.setLanguageSwitchState(view);
         SwitchCompat switchLanguage = view.findViewById(R.id.language_switch);
         switchLanguage.setChecked(switchState);
-        if(switchState){
-            TextView textLanguage = view.findViewById(R.id.chosen_language);
-            textLanguage.setText(R.string.english);
-        }else{
-            TextView textLanguage = view.findViewById(R.id.chosen_language);
-            textLanguage.setText(R.string.french);
-        }
         switchLanguage.setOnCheckedChangeListener((buttonView, isChecked) -> {
             if (isChecked) {
-                // Change the language to base language
-                changeLanguage(view, "");
+                // Change the language to French
+                LanguageUtils.changeLanguage(view, "fr");
 
             } else {
-                // Change the language to French
-                changeLanguage(view, "fr");
+                // Change the language to base language
+                LanguageUtils.changeLanguage(view, "");
             }
         });
 
@@ -163,13 +221,14 @@ public class ProfileFragment extends Fragment {
         return view;
     }
 
+
     // Add the actions for the buttons
     public void onClick(View view) {
         switch (view.getId()) {
             case R.id.edit_profile_button:
                 // Open the edit profile activity
                 onClickAnimation(view);
-                System.out.println("Edit profile");
+                requireActivity().getSupportFragmentManager().beginTransaction().replace(R.id.fragment_layout, new EditProfileFragment()).commit();
                 break;
 
             case R.id.edit_profile_picture_button:
@@ -197,6 +256,48 @@ public class ProfileFragment extends Fragment {
         }
     }
 
+    public void requestGalleryPermission() {
+        if (ActivityCompat.checkSelfPermission(getContextOfApplication(), Manifest.permission.READ_MEDIA_IMAGES)
+                == PackageManager.PERMISSION_GRANTED) {
+            // Permission is already available, start camera preview
+            Toast.makeText(getContextOfApplication(),
+                    "Gallery permission is available. Starting preview.",
+                    Toast.LENGTH_SHORT).show();
+            startGallery();
+        } else {
+            // Permission is missing and must be requested.
+            requestGalleryPermissionLauncher.launch(Manifest.permission.READ_MEDIA_IMAGES);
+        }
+    }
+
+
+    private void requestCameraPermission() {
+        if (ActivityCompat.shouldShowRequestPermissionRationale(requireActivity(),
+                Manifest.permission.CAMERA)) {
+            Toast.makeText(getContextOfApplication(), "Camera access is required to display the camera preview. Please allow the permission.",
+                    Toast.LENGTH_SHORT).show();
+            // Provide an additional rationale to the user. This would happen if the user denied the
+            // request previously, but didn't check the "Don't ask again" checkbox.
+            requestCameraPermissionLauncher.launch(Manifest.permission.CAMERA);
+
+        } else {
+            Toast.makeText(getContextOfApplication(), "Camera permission is not available. Requesting camera permission.",
+                    Toast.LENGTH_SHORT).show();
+            // Request the permission. The result will be received in onRequestPermissionResult().
+            requestCameraPermissionLauncher.launch(Manifest.permission.CAMERA);
+        }
+    }
+    private void startCamera() {
+        Intent intent = new Intent(getContextOfApplication(), CameraActivity.class);
+        startActivity(intent);
+    }
+
+    public void startGallery() {
+        imagePickerLauncher.launch(new PickVisualMediaRequest.Builder()
+                .setMediaType(ActivityResultContracts.PickVisualMedia.ImageOnly.INSTANCE)
+                .build());
+    }
+
     public void showImagePicDialog() {
         String options[] = {"Camera", "Gallery"};
         AlertDialog.Builder builder = new AlertDialog.Builder(requireActivity());
@@ -206,11 +307,33 @@ public class ProfileFragment extends Fragment {
             public void onClick(DialogInterface dialog, int which) {
                 // Handle the actions for the camera and gallery options
                 if (which == 0) {
-                    // Camera option selected
-                    //openCamera();
+                    // Camera
+                    if (ActivityCompat.checkSelfPermission(getContextOfApplication(), Manifest.permission.CAMERA)
+                            == PackageManager.PERMISSION_GRANTED) {
+                        // Permission is already available, start camera preview
+                        Toast.makeText(getContextOfApplication(),
+                                "Camera permission is available. Starting preview.",
+                                Toast.LENGTH_SHORT).show();
+                        startCamera();
+                    } else {
+                        // Permission is missing and must be requested.
+                        requestCameraPermission();
+                    }
+
                 } else if (which == 1) {
-                    // Gallery option selected
-                    //openGallery();
+                    // Gallery
+                    if(ActivityCompat.checkSelfPermission(getContextOfApplication(), Manifest.permission.READ_MEDIA_IMAGES)
+                            == PackageManager.PERMISSION_GRANTED){
+                        // Permission is already available, start gallery
+                        Toast.makeText(getContextOfApplication(),
+                                "Gallery permission is available. Starting gallery.",
+                                Toast.LENGTH_SHORT).show();
+                        startGallery();
+                    } else {
+                        // Permission is missing and must be requested.
+                        requestGalleryPermission();
+                    }
+
                 }
             }
         });
@@ -224,6 +347,11 @@ public class ProfileFragment extends Fragment {
         SharedPreferences.Editor editor = sharedPreferences.edit();
         editor.remove("authorizationToken");
         editor.apply();
+
+        // Remove the user from the database
+        db.deleteUser();
+        db.deleteImage();
+
         // Go to the login activity
         startActivity(new Intent(getContextOfApplication(), LoginActivity.class));
     }
@@ -247,6 +375,7 @@ public class ProfileFragment extends Fragment {
                 .start();
     }
 
+    //TODO: Change the notification status
     public void changeNotificationStatus(View view, boolean isChecked) {
         if (isChecked) {
             TextView textNotfificationStatus = view.findViewById(R.id.notfication_status);
@@ -256,69 +385,4 @@ public class ProfileFragment extends Fragment {
             textNotfificationStatus.setText(R.string.off);
         }
     }
-
-    public void changeLanguage(View view, String language) {
-
-
-        // Change the locale to French
-        Locale locale = new Locale(language);
-        Locale.setDefault(locale);
-
-        // Create a configuration object and update the app's resources
-        Configuration config = new Configuration();
-        config.setLocale(locale);
-        getResources().updateConfiguration(config, getResources().getDisplayMetrics());
-
-        // Start the activity to apply the new language and store the switch state in SharedPreferences
-        SwitchCompat switchLanguage = view.findViewById(R.id.language_switch);
-        boolean switchState = switchLanguage.isChecked();
-        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getContextOfApplication());
-        SharedPreferences.Editor editor = sharedPreferences.edit();
-        editor.putBoolean("languageSwitchState", switchState);
-        editor.apply();
-
-        startActivity(new Intent(getContextOfApplication(), MainActivity.class).putExtra("switchState", switchState));
-    }
-
-    // checking storage permission ,if given then we can add something in our storage
-    private Boolean checkStoragePermission() {
-        boolean result = ContextCompat.checkSelfPermission(getContextOfApplication(), Manifest.permission.WRITE_EXTERNAL_STORAGE) == (PackageManager.PERMISSION_GRANTED);
-        return result;
-    }
-
-    // requesting for storage permission
-    private void requestStoragePermission() {
-        requestPermissions(storagePermission, STORAGE_REQUEST);
-    }
-
-    // checking camera permission ,if given then we can click image using our camera
-    private Boolean checkCameraPermission() {
-        boolean result = ContextCompat.checkSelfPermission(getContextOfApplication(), Manifest.permission.CAMERA) == (PackageManager.PERMISSION_GRANTED);
-        boolean result1 = ContextCompat.checkSelfPermission(getContextOfApplication(), Manifest.permission.WRITE_EXTERNAL_STORAGE) == (PackageManager.PERMISSION_GRANTED);
-        return result && result1;
-    }
-
-    // requesting for camera permission if not given
-    private void requestCameraPermission() {
-        requestPermissions(cameraPermission, CAMERA_REQUEST);
-    }
-
-    // Here we will click a photo and then go to startactivityforresult for updating data
-    private void pickFromCamera() {
-        ContentValues contentValues = new ContentValues();
-        contentValues.put(MediaStore.Images.Media.TITLE, "Temp_pic");
-        contentValues.put(MediaStore.Images.Media.DESCRIPTION, "Temp Description");
-        imageuri = getContextOfApplication().getContentResolver().insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues);
-        Intent camerIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-        camerIntent.putExtra(MediaStore.EXTRA_OUTPUT, imageuri);
-        startActivityForResult(camerIntent, IMAGE_PICKCAMERA_REQUEST);
-    }
-
-    // We will select an image from gallery
-    private void pickFromGallery() {
-        Intent galleryIntent = new Intent(Intent.ACTION_PICK);
-        galleryIntent.setType("image/*");
-        startActivityForResult(galleryIntent, IMAGEPICK_GALLERY_REQUEST);
-    }
-
 }

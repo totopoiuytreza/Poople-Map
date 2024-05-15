@@ -1,5 +1,7 @@
 package com.devmobile.pooplemap.network.services;
 import retrofit2.Call;
+
+import com.devmobile.pooplemap.forms.UserForm;
 import com.devmobile.pooplemap.models.*;
 import com.devmobile.pooplemap.responses.UserResponse;
 
@@ -13,6 +15,6 @@ public interface UserService {
     public Call<UserResponse> getUser();
 
     @PATCH("/user/patchUser")
-    public Call<User> patchUser(@Body User patch);
+    public Call<UserResponse> patchUser(@Body UserForm patch);
 
 }
