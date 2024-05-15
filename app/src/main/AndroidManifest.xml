@@ -26,6 +26,9 @@
         android:theme="@style/Theme.PoopleMap"
         tools:targetApi="31"
         android:networkSecurityConfig="@xml/network_security_config">
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="AIzaSyCjO-xWjx86SLvpoPIDCGNaHycSfHjNwF4"></meta-data>
         <activity
             android:name=".MainActivity"
             android:exported="true">
