@@ -4,13 +4,9 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/fragment_home"
     tools:context=".fragments.HomeFragment">
 
-    <!-- TODO: Update blank fragment layout -->
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:text="Home Fragment" />
 
     <androidx.fragment.app.FragmentContainerView
         android:id="@+id/user_map"
@@ -19,4 +15,40 @@
         android:layout_height="match_parent"
         app:cameraZoom="15" />
 
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|end"
+        android:orientation="vertical"
+        android:padding="10dp">
+        <ImageButton
+            android:id="@+id/add_location"
+            android:layout_width="60sp"
+            android:layout_height="60sp"
+            android:background="@drawable/round_button_100"
+            android:scaleType="centerCrop"
+            android:src="@drawable/baseline_add_circle_24"
+            app:tint="@color/colorPrimary" />
+
+        <ImageButton
+            android:id="@+id/current_location"
+            android:layout_width="60sp"
+            android:layout_height="60sp"
+            android:background="@drawable/round_button_100"
+            android:scaleType="centerCrop"
+            android:src="@drawable/icon_my_location"
+            app:tint="@color/colorSecondary" />
+    </LinearLayout>
+
+
+
+    <SearchView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/search_map"
+        android:layout_margin="10dp"
+        android:queryHint="@string/search"
+        android:iconifiedByDefault="false"
+
+        android:background="@color/colorTextWhite"/>
 </FrameLayout>

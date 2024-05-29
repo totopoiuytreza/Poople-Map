@@ -20,4 +20,6 @@
     <string name="off">Off</string>
     <string name="email">Email</string>
     <string name="update_profile">Update Profile</string>
+    <string name="search">Search\n</string>
+    <string name="add_location">Add location</string>
 </resources>

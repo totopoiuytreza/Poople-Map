@@ -20,4 +20,6 @@
     <string name="on">Activé</string>
     <string name="off">Desactivé</string>
     <string name="email">Email</string>
+    <string name="update_profile">Mettre à jour le profil</string>
+    <string name="search">Rechercher\n</string>
 </resources>
